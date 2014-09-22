@@ -31,6 +31,25 @@
             <input type="text" name="field3" placeholder="Third field" /><br/>
         </form>
     </section>
+    <hr />
+    <section id="dashboard-buttons">
+        <h1>Track dashboard button preference</h1>
+        <p>The Keen tracking function will only work with the <code>&lt;section&gt;</code> element whose <em>id</em> attribute is <code>dashboard</code></p>
+        <div id="dashboard">
+            <h3>Section ID: dashboard</h3>
+            <p>
+                <button type="button">Add</button><br />
+                <button type="button">View</button>
+            </p>
+        </div>
+        <div id="dashboard-faux">
+            <h3>Section ID: dashboard-faux</h3>
+            <p>
+                <button type="button">Add</button><br />
+                <button type="button">View</button>
+            </p>
+        </div>
+    </section>
 </div>
 <!-- jQuery is used -->
 <script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
@@ -65,6 +84,10 @@
     /** Set up a privacy scope (it's good practice) **/
     (function($, w, d) {
         var url = $.url();
+        var addPrefix = function(val) {
+            var prefix = 'keenTracker_';
+            return (typeof val).toLowerCase() !== 'string' ? prefix : prefix + val;
+        };
 
         $(w).on('keenReady', function() {
             /** Set up Keen object **/
@@ -93,7 +116,7 @@
                     };
 
                     tracker.track(data, 'registration');
-                    alert("Registration tracked!");
+                    alert("Registration data logged.");
                 });
             }());
 
@@ -131,7 +154,7 @@
                         }
                     });
                     if (!$.isEmptyObject(problems)) {
-                        tracker.track(problems, 'add_ce_form_problems');
+                        tracker.track(problems, 'form_problems');
                         alert(msg);
                     }
                 });
@@ -150,12 +173,37 @@
                     /** Track only once **/
                     if (!firstField) {
                         firstField = elem.attr('name');
-                        tracker.track(firstField, 'add_ce_field_focus');
+                        tracker.track(firstField, 'field_focus');
                         alert('The first field chosen is ' + firstField + ".\n" + 'Data logged.');
                     } else {
                         alert("The first field has already been selected.\nData not logged.");
                     }
                 })
+            }());
+
+            /** Track dashboard button preference **/
+            (function() {
+                var section = $('#dashboard');
+                var txt; // the button text
+                var cookieName = addPrefix('dashboard_button_preference');
+
+                /** Proceed only if the section exists **/
+                if (!section.length) return;
+
+                /** Event handling proper **/
+                section.find('button').on('click', function() {
+                    /** Proceed only if the preference hasn't been tracked yet **/
+                    if ($.cookie(cookieName)) {
+                        alert("Dashboard button preference has already been logged.");
+                        return;
+                    }
+                    /** Log data **/
+                    txt = $(this).text();
+                    tracker.track(txt, 'dashboard_button_preference', function() {
+                        $.cookie(cookieName, true, {expires: 1, path: '/'});
+                        alert('Dashboard button preference logged.');
+                    });
+                });
             }());
         });
     }(jQuery, window, document));

@@ -90,7 +90,7 @@
             };
 
             /** Track a single data object **/
-            $.keenTracker.prototype.track = function(data, collection) {
+            $.keenTracker.prototype.track = function(data, collection, callback) {
                 data = $.fn.extend({
                     data: typeof data === typeof (Object) ? {} : null
                 }, {
@@ -101,6 +101,11 @@
 
                 /** Log Keen data **/
                 this.send(collection, data);
+
+                /** Callback **/
+                if (typeof callback === typeof Function) {
+                    callback();
+                }
             };
 
             /** Trigger the event (because we're using $.when) **/
