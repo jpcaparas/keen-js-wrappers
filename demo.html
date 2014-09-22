@@ -34,6 +34,10 @@
 </div>
 <!-- jQuery is used -->
 <script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
+<!-- load URL Parser (purl) -->
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
+<!-- load jQuery Cookie -->
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script type="text/javascript">
     //<![CDATA[
     /** Check if jQuery has loaded successfully **/
@@ -59,7 +63,9 @@
     //<![CDATA[
     /** Since we're loading dependency scripts over a CDN, we're forced to listen an event (keenReady), triggered by the wrapper IIFE **/
     /** Set up a privacy scope (it's good practice) **/
-    (function($, w) {
+    (function($, w, d) {
+        var url = $.url();
+
         $(w).on('keenReady', function() {
             /** Set up Keen object **/
             var params = {
@@ -67,15 +73,26 @@
                 send: false // if set to true, this will send the data to Keen
             };
 
-            var track = new $.keenTracker(KeenKeys, params);
+            var tracker = new $.keenTracker(KeenKeys, params);
 
             /** Track registrations **/
             (function() {
                 $('section#registrations').find('a').on('click', function(e) {
                     e.preventDefault();
-                    track.registration({
-                        email: 'postmaster@dev.local'
-                    });
+
+                    /** Set up defaults **/
+                    var data = {
+                        email: 'n/a' || 'postmaster@dev.local',
+                        source: url.param('utm_source') || url.attr('host'),
+                        source_referrer: d.referrer || 'n/a',
+                        landing_page: url.attr('host') + url.attr('path') || 'n/a',
+                        landing_page_variant: url.param('landing_page_variant') || 'default',
+                        campaign: url.param('utm_campaign') || 'n/a',
+                        medium: url.param('utm_medium') || 'website',
+                        content: url.param('utm_content') || 'n/a'
+                    };
+
+                    tracker.track(data, 'registration');
                     alert("Registration tracked!");
                 });
             }());
@@ -114,7 +131,7 @@
                         }
                     });
                     if (!$.isEmptyObject(problems)) {
-                        track.form_problems(problems, 'add_ce_form_problems');
+                        tracker.track(problems, 'add_ce_form_problems');
                         alert(msg);
                     }
                 });
@@ -133,15 +150,15 @@
                     /** Track only once **/
                     if (!firstField) {
                         firstField = elem.attr('name');
-                        track.field_focus(firstField, 'add_ce_field_focus');
+                        tracker.track(firstField, 'add_ce_field_focus');
                         alert('The first field chosen is ' + firstField + ".\n" + 'Data logged.');
                     } else {
                         alert("The first field has already been selected.\nData not logged.");
                     }
                 })
             }());
-        })
-    }(jQuery, window));
+        });
+    }(jQuery, window, document));
     //]]>
 </script>
 </body>
