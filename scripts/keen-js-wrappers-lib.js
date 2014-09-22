@@ -55,7 +55,7 @@
                 send: true,
                 debug: false,
                 debugPrefix: 'debug_'
-            }
+            };
 
             $.keenTracker = function(keys, settings) {
                 this.client = new Keen({
@@ -65,7 +65,7 @@
                 });
 
                 this.settings = $.fn.extend(defaults, settings);
-            }
+            };
 
             $.keenTracker.prototype.send = function(collection, data) {
                 collection = this.settings.debug ? this.settings.debugPrefix + collection : collection;
@@ -93,7 +93,7 @@
                         console.log("Data sent to collection [" + collection + "]");
                     }
                 }
-            }
+            };
 
             /** Track registrations **/
             $.keenTracker.prototype.registration = function(data, collection) {
@@ -107,7 +107,7 @@
                     campaign: url.param('utm_campaign') || 'n/a',
                     medium: url.param('utm_medium') || 'website',
                     content: url.param('utm_content') || 'n/a'
-                }
+                };
 
                 /** Merge defaults with user params **/
                 data = $.fn.extend(defaults, data);
@@ -116,7 +116,7 @@
 
                 /** Log Keen data **/
                 this.send(collection, data);
-            }
+            };
 
             /** Track form submission problems **/
             $.keenTracker.prototype.form_problems = function(data, collection) {
@@ -133,7 +133,24 @@
 
                 /** Log Keen data **/
                 this.send(collection, data);
-            }
+            };
+
+            /** Track first field focus **/
+            $.keenTracker.prototype.field_focus = function(data, collection) {
+                /** Set up defaults **/
+                var defaults = {
+                    field_focus: data
+                };
+
+                data = $.fn.extend(defaults, {
+                    field_focus: data
+                });
+
+                collection = collection ? collection : 'field_focus';
+
+                /** Log Keen data **/
+                this.send(collection, data);
+            };
 
             /** Trigger the event (because we're using $.when) **/
             $(window).trigger('keenReady');

@@ -2,22 +2,35 @@
 <html lang="en">
 <head>
     <title>Keen.IO JS SDK wrappers</title>
-    <meta name="decription" content="A set of Keen.IO JS SDK wrappers that help in tracking events on a web page (e.g. registration, form problems" />
+    <meta name="description" content="A set of Keen.IO JS SDK wrappers that help in tracking events on a web page (e.g. registration, form problems" />
     <meta name="robots" content="nofollow,noindex" />
     <!-- TODO: Create the CSS file -->
 </head>
 <body>
 <div id="wrapper">
-    <h1>Track registrations</h1>
-    <form id="form" method="post">
-        <input type="text" id="fname" placeholder="First name" /><br />
-        <input type="text" id="lname" placeholder="Last name" /><br />
-        <input type="text" id="email" placeholder="Email" /><br/>
-        <input type="submit" value="Submit" />
-    </form>
+    <section id="form-problems">
+        <h1>Track registrations</h1>
+        <form method="post">
+            <input type="text" name="fname" placeholder="First name" /><br />
+            <input type="text" name="lname" placeholder="Last name" /><br />
+            <input type="text" name="email" placeholder="Email" /><br/>
+            <input type="submit" value="Submit" />
+        </form>
+    </section>
     <hr />
-    <h1>Track form problems</h1>
-    <a href="#" id="register">Register</a>
+    <section id="registrations">
+        <h1>Track form problems</h1>
+        <a href="#">Register</a>
+    </section>
+    <hr />
+    <section id="field-focus">
+        <h1>Track first field focus</h1>
+        <form method="post">
+            <input type="text" name="field1" placeholder="First field" /><br />
+            <input type="text" name="field2" placeholder="Second field" /><br />
+            <input type="text" name="field3" placeholder="Third field" /><br/>
+        </form>
+    </section>
 </div>
 <!-- jQuery is used -->
 <script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
@@ -46,51 +59,89 @@
     //<![CDATA[
     /** Since we're loading dependency scripts over a CDN, we're forced to listen an event (keenReady), triggered by the wrapper IIFE **/
     /** Set up a privacy scope (it's good practice) **/
-    (function($, w, d) {
-        $(window).on('keenReady', function() {
+    (function($, w) {
+        $(w).on('keenReady', function() {
             /** Set up Keen object **/
             var params = {
                 debug: true, // useful for local testing (i.e. outputs data to the console)
                 send: false // if set to true, this will send the data to Keen
             };
+
             var track = new $.keenTracker(KeenKeys, params);
 
             /** Track registrations **/
-            $('#register').on('click', function(e) {
-                track.registration({
-                    email: 'postmaster@dev.local'
+            (function() {
+                $('section#registrations').find('a').on('click', function(e) {
+                    e.preventDefault();
+                    track.registration({
+                        email: 'postmaster@dev.local'
+                    });
+                    alert("Registration tracked!");
                 });
-                alert("Registration tracked!");
-            });
+            }());
 
             /** Track form problems **/
-            var problems = {};
-            var required = ['fname', 'lname', 'email'];
-            var val, msg = '';
-            $('#form').on('submit', function(e) {
-                e.preventDefault();
-                $.each(required, function(k, v) {
-                    // check if empty
-                    val = $('#' + v).val();
-                    if (!val.length) {
-                        /** If key exists, just push to it **/
-                        if (problems.hasOwnProperty(v)) {
-                            problems[v].push('empty');
-                        } else {
-                            /** Create the key **/
-                            problems[v] = ['empty'];
+            (function() {
+                var problems,  // contains the fields that have errors
+                        required, // required fields
+                        val, // debugging var
+                        msg; // debugging var
+
+                var section;
+
+                $('section#form-problems').on('submit', function(e) {
+                    e.preventDefault();
+                    section = $(this);
+
+                    problems = {};
+                    required = ['fname', 'lname', 'email'];
+                    val = msg = '';
+
+                    /** Iterate through fields **/
+                    $.each(required, function(k, v) {
+                        // check if empty
+                        val = section.find('[name="' + v + '"]').val();
+                        if (!val.length) {
+                            /** If key exists, just push to it **/
+                            if (problems.hasOwnProperty(v)) {
+                                problems[v].push('empty');
+                            } else {
+                                /** Create the key and push the value **/
+                                problems[v] = ['empty'];
+                            }
+                            /** Create an output message (for demoing) **/
+                            msg += "- The " + v + " field is empty\n";
                         }
-                        /** Create an output message (for demoing) **/
-                        msg += "- The " + v + " field is empty\n";
+                    });
+                    if (!$.isEmptyObject(problems)) {
+                        track.form_problems(problems, 'add_ce_form_problems');
+                        alert(msg);
                     }
                 });
-                alert(msg);
-                if (!$.isEmptyObject(problems)) {
-                    track.form_problems(problems, 'add_ce_form_problems');
-                }
-            });
+            }());
+
+            /** Track first field focus **/
+            (function() {
+                var firstField = null; // the first field of focus
+                var elem;
+
+                $('section#field-focus').find('[name]').on('click', function(e) {
+                    e.preventDefault();
+
+                    elem = $(this);
+
+                    /** Track only once **/
+                    if (!firstField) {
+                        firstField = elem.attr('name');
+                        track.field_focus(firstField, 'add_ce_field_focus');
+                        alert('The first field chosen is ' + firstField + ".\n" + 'Data logged.');
+                    } else {
+                        alert("The first field has already been selected.\nData not logged.");
+                    }
+                })
+            }());
         })
-    }(jQuery, window, document));
+    }(jQuery, window));
     //]]>
 </script>
 </body>
