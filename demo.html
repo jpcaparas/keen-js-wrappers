@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Keen.IO JS SDK wrappers</title>
+    <meta name="decription" content="A set of Keen.IO JS SDK wrappers that help in tracking events on a web page (e.g. registration, form problems" />
+    <meta name="robots" content="nofollow,noindex" />
+    <!-- TODO: Create the CSS file -->
+</head>
+<body>
+<div id="wrapper">
+    <h1>Track registrations</h1>
+    <form id="form" method="post">
+        <input type="text" id="fname" placeholder="First name" /><br />
+        <input type="text" id="lname" placeholder="Last name" /><br />
+        <input type="text" id="email" placeholder="Email" /><br/>
+        <input type="submit" value="Submit" />
+    </form>
+    <hr />
+    <h1>Track form problems</h1>
+    <a href="#" id="register">Register</a>
+</div>
+<!-- jQuery is used -->
+<script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+    //<![CDATA[
+    /** Check if jQuery has loaded successfully **/
+    window.jQuery || (function(c) {
+        c.warn('jQuery is not defined!');
+    }(console));
+    //]]>
+</script>
+<!-- load the wrapper library itself -->
+<script type="text/javascript" src="scripts/keen-js-wrappers-lib.js"></script>
+<!-- load API keys file containing the key object (it's on the .gitignore file, but you can follow the template)  -->
+<script type="text/javascript" src="scripts/keen-js-wrappers-keys.js"></script>
+<script type="text/javascript">
+    //<![CDATA[
+    /** Check if the KeenKeys object is defined **/
+    window.KeenKeys || (function(c) {
+        c.warn('KeenKeys object is not defined!');
+    }(console));
+    //]]>
+</script>
+<!-- test the functions if they work -->
+<script type="text/javascript">
+    //<![CDATA[
+    /** Since we're loading dependency scripts over a CDN, we're forced to listen an event (keenReady), triggered by the wrapper IIFE **/
+    /** Set up a privacy scope (it's good practice) **/
+    (function($, w, d) {
+        $(window).on('keenReady', function() {
+            /** Set up Keen object **/
+            var params = {
+                debug: true, // useful for local testing (i.e. outputs data to the console)
+                send: false // if set to true, this will send the data to Keen
+            };
+            var track = new $.keenTracker(KeenKeys, params);
+
+            /** Track registrations **/
+            $('#register').on('click', function(e) {
+                track.registration({
+                    email: 'postmaster@dev.local'
+                });
+                alert("Registration tracked!");
+            });
+
+            /** Track form problems **/
+            var problems = {};
+            var required = ['fname', 'lname', 'email'];
+            var val, msg = '';
+            $('#form').on('submit', function(e) {
+                e.preventDefault();
+                $.each(required, function(k, v) {
+                    // check if empty
+                    val = $('#' + v).val();
+                    if (!val.length) {
+                        /** If key exists, just push to it **/
+                        if (problems.hasOwnProperty(v)) {
+                            problems[v].push('empty');
+                        } else {
+                            /** Create the key **/
+                            problems[v] = ['empty'];
+                        }
+                        /** Create an output message (for demoing) **/
+                        msg += "- The " + v + " field is empty\n";
+                    }
+                });
+                alert(msg);
+                if (!$.isEmptyObject(problems)) {
+                    track.form_problems(problems, 'add_ce_form_problems');
+                }
+            });
+        })
+    }(jQuery, window, document));
+    //]]>
+</script>
+</body>
+</html>

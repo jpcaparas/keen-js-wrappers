@@ -1,0 +1,6 @@
+# Ignore IDEs configurations
+.idea/
+.nbproject/
+
+# Ignore key files
+*keys.js
