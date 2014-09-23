@@ -4,7 +4,7 @@
     <title>Keen.IO JS SDK wrappers</title>
     <meta name="description" content="A set of Keen.IO JS SDK wrappers that help in tracking events on a web page (e.g. registration, form problems" />
     <meta name="robots" content="nofollow,noindex" />
-    <!-- TODO: Create the CSS file -->
+    <link rel="stylesheet" type="text/css" href="./styles/style.css" />
 </head>
 <body>
 <div id="wrapper">
@@ -50,6 +50,14 @@
             </p>
         </div>
     </section>
+    <hr />
+    <section id="auth-preference">
+        <h1>Track authenticator preference</h1>
+        <!-- images taken from http://cdn.socialmediaexaminer.com/wp-content/uploads/2013/06/ic-scoopit-signup.jpg -->
+        <p><a href="#" class="facebook"><img src="images/auth-facebook.png" /></a></p>
+        <p><a href="#" class="twitter"><img src="images/auth-twitter.png" /></a></p>
+        <p><a href="#" class="linkedin"><img src="images/auth-linkedin.png" /></a></p>
+    </section>
 </div>
 <!-- jQuery is used -->
 <script type="text/javascript" src="scripts/jquery-1.11.1.min.js"></script>
@@ -63,6 +71,21 @@
     window.jQuery || (function(c) {
         c.warn('jQuery is not defined!');
     }(console));
+    //]]>
+</script>
+<script type="text/javascript">
+    //<![CDATA[
+    /** Highlight if the location hash matches a section and hide the other sections **/
+    (function($, d, l) {
+        $(d).ready(function() {
+            var hash = l.hash;
+            var section = $('section' + hash);
+            if (!hash.length || !section.length)
+                return;
+
+            section.addClass('highlight');
+        });
+    }(jQuery, document, location));
     //]]>
 </script>
 <!-- load the wrapper library itself -->
@@ -183,7 +206,7 @@
 
             /** Track dashboard button preference **/
             (function() {
-                var section = $('#dashboard');
+                var section = $('section#dashboard');
                 var txt; // the button text
                 var cookieName = addPrefix('dashboard_button_preference');
 
@@ -202,6 +225,29 @@
                     tracker.track(txt, 'dashboard_button_preference', function() {
                         $.cookie(cookieName, true, {expires: 1, path: '/'});
                         alert('Dashboard button preference logged.');
+                    });
+                });
+            }());
+
+            /** Track authenticator preference **/
+            (function() {
+                var cookieName = addPrefix('authenticator_preference');
+                var section = $('section#auth-preference');
+                var pref;
+
+                section.find('a').click(function(e) {
+                    e.preventDefault();
+
+                    /** Proceed only if the preference hasn't been tracked yet **/
+                    if ($.cookie(cookieName)) {
+                        alert("Authenticator preference has already been logged.");
+                        return;
+                    }
+
+                    pref = $(this).attr('class');
+                    tracker.track(pref, 'authenticator_preference', function() {
+                        $.cookie(cookieName, true, {expires: 1, path: '/'});
+                        alert('Authenticator preference logged.');
                     });
                 });
             }());
